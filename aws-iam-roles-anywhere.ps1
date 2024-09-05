@@ -49,7 +49,7 @@ $request_obj = @{
     uri = ('https://{0}{1}' -f $req_url,$req_path)
     method = 'POST'
     headers = @{}
-    body = ('{"durationSeconds":{0}, "profileArn":"{1}", "roleArn":"{2}", "trustAnchorArn":"{3}"}' -f $Duration,$ProfileArn,$RoleArn,$TrustAnchorArn)
+    body = ('{"durationSeconds": ' + $Duration +',"profileArn": "' + $ProfileArn + '","roleArn": "' + $RoleArn + '","trustAnchorArn": "' + $TrustAnchorArn + '"}')
     contenttype = 'application/json'
     skipheadervalidation = $true
 }
@@ -69,7 +69,7 @@ $header_list | ForEach-Object {
     $canonical_headers += ('{0}:{1}{2}' -f $_,$request_obj['headers'][$_],"`n");
 }
 
-$canonical_request = ('{1}{0}{2}{0}{3}{0}{4}{0}{5}{0}{6}{0}' -f
+$canonical_request = ('{1}{0}{2}{0}{3}{0}{4}{0}{5}{0}{6}' -f
         "`n",
         $request_obj['method'],
         ([System.Web.HttpUtility]::UrlEncode($req_path) -replace '%2F','/'),
@@ -85,8 +85,8 @@ $string_to_sign = ('AWS4-X509-RSA-SHA256{0}{1}{0}{2}{0}{3}' -f "`n",$request_obj
 
 $signed_string = Get-SignedSha256Hash -Plaintext $string_to_sign -RSAKey $cert_obj.PrivateKey;
 
-$request_obj['headers'].Add('X-Amz-Date', 
+$request_obj['headers'].Add('Authorization', 
     ('AWS4-X509-RSA-SHA256 Credential={0}/{1}, SignedHeaders={2}, Signature={3}' -f [Numerics.BigInteger]::new($cert_obj.GetSerialNumber()),$scope,$signed_headers,$signed_string)
 );
 
-$request_obj
+Invoke-RestMethod @request_obj;
